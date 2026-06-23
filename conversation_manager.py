@@ -83,7 +83,7 @@ def mostrar_menu_principal(numero: str, saludo: bool = True):
 def procesar_menu_principal(numero: str, opcion: str):
     if opcion == "servicios":
         enviar_catalogo_servicios(numero)
-        mostrar_menu_principal(numero, saludo=False)
+        iniciar_agendamiento(numero)
     elif opcion == "agendar":
         iniciar_agendamiento(numero)
     elif opcion == "horario":
