@@ -31,10 +31,10 @@ SERVICIOS = {
 # Para agregar/cambiar una foto: pon el archivo en la carpeta "static" del proyecto
 # con este mismo nombre exacto, sube el cambio a GitHub, y Render se actualiza solo.
 IMAGENES_SERVICIOS = {
-    "Lavado Detallado": "lavado_detallado.jpg",
-    "Lavado Premium": "lavado_premium.jpg",
-    "Lavado Súper Premium": "lavado_super_premium.jpg",
-    "Cerámico": "ceramico.jpg",
+    "Lavado Detallado": "lavado_detallado.jpeg",
+    "Lavado Premium": "lavado_premium.jpeg",
+    "Lavado Súper Premium": "lavado_super_premium.jpeg",
+    "Cerámico": "ceramico.jpeg",
 }
 
 
