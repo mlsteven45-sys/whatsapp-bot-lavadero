@@ -91,7 +91,7 @@ def mostrar_menu_principal(numero: str, saludo: bool = True):
             "rows": [
                 {"id": "servicios", "title": "Servicios y precios"},
                 {"id": "agendar", "title": "Agendar una cita"},
-                {"id": "cancelar_reagendar", "title": "Cancelar o reagendar cita"},
+                {"id": "cancelar_reagendar", "title": "Cancelar o mover cita"},
                 {"id": "pqr", "title": "PQR (quejas y reclamos)"},
                 {"id": "horario", "title": "Horario de atención"},
                 {"id": "ubicacion", "title": "Ubicación"},
