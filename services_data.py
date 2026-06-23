@@ -13,8 +13,12 @@ UBICACION = (
     "Ver en mapa: https://www.google.com/maps/search/?api=1&query=Motobon+detailing+Cl.+80+%2345-91+Aranjuez+Medellin"
 )
 
+# Número de WhatsApp PERSONAL del dueño, donde recibe avisos de "asesor" y PQR.
+# Formato: código de país + número, sin "+", sin espacios. Ej: "573001234567"
+# Si se deja vacío (""), el bot simplemente no envía esas notificaciones.
+NUMERO_DUENO = "573015747945"
+
 # URL base donde está corriendo el bot en producción (Render).
-# Si el dominio de Render cambia en el futuro, solo hay que actualizar esta línea.
 BASE_URL = "https://motobot-7iig.onrender.com"
 
 # Precios en pesos colombianos (COP).
@@ -28,8 +32,6 @@ SERVICIOS = {
 }
 
 # Nombre del archivo de imagen (dentro de la carpeta /static) para cada servicio.
-# Para agregar/cambiar una foto: pon el archivo en la carpeta "static" del proyecto
-# con este mismo nombre exacto, sube el cambio a GitHub, y Render se actualiza solo.
 IMAGENES_SERVICIOS = {
     "Lavado Detallado": "lavado_detallado.jpeg",
     "Lavado Premium": "lavado_premium.jpeg",
