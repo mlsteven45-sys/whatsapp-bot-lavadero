@@ -57,11 +57,15 @@ def handle_incoming_message(numero: str, texto: str = None, interactive_id: str 
 
 # ---------------- MENÚ PRINCIPAL ----------------
 
-def mostrar_menu_principal(numero: str):
+def mostrar_menu_principal(numero: str, saludo: bool = True):
     set_estado(numero, "MENU_PRINCIPAL")
+    if saludo:
+        texto = f"👋 ¡Hola! Bienvenido a *{services_data.NOMBRE_NEGOCIO}*.\n¿En qué te puedo ayudar?"
+    else:
+        texto = "¿Hay algo más en lo que te pueda ayudar?"
     send_list_message(
         to=numero,
-        body=f"👋 ¡Hola! Bienvenido a *{services_data.NOMBRE_NEGOCIO}*.\n¿En qué te puedo ayudar?",
+        body=texto,
         button_text="Ver opciones",
         sections=[{
             "title": "Menú principal",
@@ -79,21 +83,21 @@ def mostrar_menu_principal(numero: str):
 def procesar_menu_principal(numero: str, opcion: str):
     if opcion == "servicios":
         enviar_catalogo_servicios(numero)
-        mostrar_menu_principal(numero)
+        mostrar_menu_principal(numero, saludo=False)
     elif opcion == "agendar":
         iniciar_agendamiento(numero)
     elif opcion == "horario":
         send_text_message(numero, f"🕒 Horario de atención:\n{services_data.HORARIO_ATENCION}")
-        mostrar_menu_principal(numero)
+        mostrar_menu_principal(numero, saludo=False)
     elif opcion == "ubicacion":
         send_text_message(numero, services_data.UBICACION)
-        mostrar_menu_principal(numero)
+        mostrar_menu_principal(numero, saludo=False)
     elif opcion == "asesor":
         send_text_message(numero, "👍 En un momento un asesor humano te va a contactar. ¡Gracias por tu paciencia!")
         set_estado(numero, "INICIO")
     else:
         send_text_message(numero, "No entendí esa opción 🙏 Por favor selecciona una de la lista.")
-        mostrar_menu_principal(numero)
+        mostrar_menu_principal(numero, saludo=False)
 
 
 def enviar_catalogo_servicios(numero: str):
@@ -186,7 +190,7 @@ def procesar_agendar_confirmar(numero: str, opcion: str):
         booking.guardar_cita(numero, datos)
         send_text_message(numero, "✅ ¡Listo! Tu cita quedó agendada. Te esperamos 🏍️")
         sesion["datos"] = {}
-        mostrar_menu_principal(numero)
+        mostrar_menu_principal(numero, saludo=False)
     elif opcion == "cancelar":
         send_text_message(numero, "Cita cancelada. Si quieres empezar de nuevo, escribe *menu*.")
         sesion["datos"] = {}
