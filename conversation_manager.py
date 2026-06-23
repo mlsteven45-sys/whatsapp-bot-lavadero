@@ -17,6 +17,15 @@ from whatsapp_api import send_text_message, send_button_message, send_list_messa
 
 user_states = {}
 
+# Palabras/frases que reinician el menú principal sin importar en qué parte
+# de la conversación esté el cliente (siempre que no esté en medio de
+# escribir un dato como su nombre, una fecha o una PQR).
+SALUDOS_RESET = (
+    "hola", "ola", "holaa", "menu", "menú", "inicio",
+    "buenas", "buenas tardes", "buenas noches", "buenos dias", "buenos días",
+    "buen dia", "buen día", "que tal", "qué tal", "hey", "buenas!", "saludos",
+)
+
 
 def get_session(numero: str) -> dict:
     if numero not in user_states:
@@ -33,14 +42,15 @@ def handle_incoming_message(numero: str, texto: str = None, interactive_id: str 
     sesion = get_session(numero)
     estado_actual = sesion["estado"]
     entrada = (interactive_id or texto or "").strip().lower()
+    entrada_normalizada = entrada.rstrip("!.,¡¿? ")
 
-    # Estados donde NO queremos que "hola"/"menu" interrumpa (el cliente está
+    # Estados donde NO queremos que un saludo interrumpa (el cliente está
     # escribiendo texto libre como su nombre, una fecha, o su PQR).
     estados_que_no_se_reinician = (
         "AGENDAR_NOMBRE", "AGENDAR_PLACA", "AGENDAR_FECHA", "AGENDAR_HORA",
         "REAGENDAR_FECHA", "REAGENDAR_HORA", "PQR_ESCRIBIENDO",
     )
-    if entrada in ("hola", "menu", "menú", "inicio") and estado_actual not in estados_que_no_se_reinician:
+    if entrada_normalizada in SALUDOS_RESET and estado_actual not in estados_que_no_se_reinician:
         return mostrar_menu_principal(numero)
 
     manejadores = {
