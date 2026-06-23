@@ -6,7 +6,7 @@ Motobon es un negocio especializado únicamente en motos (no atiende carros).
 
 NOMBRE_NEGOCIO = "Motobon"
 
-HORARIO_ATENCION = "Todos los días: 9:00 AM - 8:00 PM"
+HORARIO_ATENCION = "Todos los días: 9:00 AM - 8:00 PM (Incluye domingos y festivos)"
 
 UBICACION = (
     "📍 Calle 80 #45-91, Campo Valdés, Aranjuez, Medellín, Antioquia\n"
