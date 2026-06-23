@@ -1,0 +1,27 @@
+CÓMO AGREGAR LAS FOTOS DE LOS SERVICIOS
+========================================
+
+1. Pide al dueño de Motobon las 4 fotos (una por cada servicio).
+   Formato recomendado: JPG o PNG, máximo 5 MB cada una.
+
+2. Pon cada foto dentro de esta misma carpeta "static", con EXACTAMENTE
+   estos nombres de archivo (mayúsculas/minúsculas y extensión incluidas):
+
+   - lavado_detallado.jpg
+   - lavado_premium.jpg
+   - lavado_super_premium.jpg
+   - ceramico.jpg
+
+   (Si la foto que te dan es .png en vez de .jpg, está bien, solo
+   actualiza la extensión en services_data.py, dentro de IMAGENES_SERVICIOS)
+
+3. En VS Code, ve a Source Control, haz un commit (ej: "Agregar fotos de
+   servicios") y haz clic en "Sync Changes" para subirlo a GitHub.
+
+4. Render detecta el cambio solo y vuelve a desplegar en 1-2 minutos.
+
+5. Prueba el bot: escribe "hola" -> toca "Servicios y precios" -> deberías
+   ver cada foto con su precio debajo.
+
+NOTA: si en el futuro cambian de nombre/dominio en Render, hay que
+actualizar la variable BASE_URL en services_data.py.

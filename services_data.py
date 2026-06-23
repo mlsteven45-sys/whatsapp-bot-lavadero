@@ -2,9 +2,6 @@
 Datos del negocio: nombre, horario, ubicación, servicios y precios.
 
 Motobon es un negocio especializado únicamente en motos (no atiende carros).
-Si en el futuro el negocio empieza a atender carros también, se puede agregar
-una clave "carro" dentro de SERVICIOS, pero habría que volver a agregar el
-paso de "tipo de vehículo" en conversation_manager.py.
 """
 
 NOMBRE_NEGOCIO = "Motobon"
@@ -16,6 +13,10 @@ UBICACION = (
     "Ver en mapa: https://www.google.com/maps/search/?api=1&query=Motobon+detailing+Cl.+80+%2345-91+Aranjuez+Medellin"
 )
 
+# URL base donde está corriendo el bot en producción (Render).
+# Si el dominio de Render cambia en el futuro, solo hay que actualizar esta línea.
+BASE_URL = "https://motobot-7iig.onrender.com"
+
 # Precios en pesos colombianos (COP).
 SERVICIOS = {
     "moto": {
@@ -24,6 +25,16 @@ SERVICIOS = {
         "Lavado Súper Premium": 90000,
         "Cerámico": 390000,
     },
+}
+
+# Nombre del archivo de imagen (dentro de la carpeta /static) para cada servicio.
+# Para agregar/cambiar una foto: pon el archivo en la carpeta "static" del proyecto
+# con este mismo nombre exacto, sube el cambio a GitHub, y Render se actualiza solo.
+IMAGENES_SERVICIOS = {
+    "Lavado Detallado": "lavado_detallado.jpg",
+    "Lavado Premium": "lavado_premium.jpg",
+    "Lavado Súper Premium": "lavado_super_premium.jpg",
+    "Cerámico": "ceramico.jpg",
 }
 
 
@@ -38,3 +49,11 @@ def formatear_precios(tipo_vehiculo: str = "moto") -> str:
         precio_formateado = f"{precio:,}".replace(",", ".")
         lineas.append(f"• {nombre}: ${precio_formateado} COP")
     return "\n".join(lineas)
+
+
+def url_imagen_servicio(nombre_servicio: str) -> str | None:
+    """Devuelve la URL pública completa de la imagen de un servicio, o None si no tiene."""
+    archivo = IMAGENES_SERVICIOS.get(nombre_servicio)
+    if not archivo:
+        return None
+    return f"{BASE_URL}/static/{archivo}"

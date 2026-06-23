@@ -41,6 +41,23 @@ def send_text_message(to: str, body: str):
     return _post(payload)
 
 
+def send_image_message(to: str, image_url: str, caption: str = ""):
+    """
+    Envía una imagen a partir de una URL pública (https), con un texto
+    opcional debajo (caption). La URL debe ser accesible sin login.
+    """
+    payload = {
+        "messaging_product": "whatsapp",
+        "to": to,
+        "type": "image",
+        "image": {
+            "link": image_url,
+            "caption": caption,
+        },
+    }
+    return _post(payload)
+
+
 def send_button_message(to: str, body: str, buttons: list):
     """
     Envía un mensaje con hasta 3 botones de respuesta rápida.

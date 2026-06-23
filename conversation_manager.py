@@ -15,7 +15,7 @@ sin tener que cambiar la lógica de las funciones de abajo.
 
 import services_data
 import booking
-from whatsapp_api import send_text_message, send_button_message, send_list_message
+from whatsapp_api import send_text_message, send_button_message, send_list_message, send_image_message
 
 # { "numero_whatsapp": {"estado": "...", "datos": {...}} }
 user_states = {}
@@ -78,7 +78,7 @@ def mostrar_menu_principal(numero: str):
 
 def procesar_menu_principal(numero: str, opcion: str):
     if opcion == "servicios":
-        send_text_message(numero, "🏍️ *Nuestros servicios:*\n" + services_data.formatear_precios("moto"))
+        enviar_catalogo_servicios(numero)
         mostrar_menu_principal(numero)
     elif opcion == "agendar":
         iniciar_agendamiento(numero)
@@ -94,6 +94,19 @@ def procesar_menu_principal(numero: str, opcion: str):
     else:
         send_text_message(numero, "No entendí esa opción 🙏 Por favor selecciona una de la lista.")
         mostrar_menu_principal(numero)
+
+
+def enviar_catalogo_servicios(numero: str):
+    """Envía una foto + precio por cada servicio disponible (o solo texto si no hay foto)."""
+    send_text_message(numero, "🏍️ *Nuestros servicios:*")
+    for nombre, precio in services_data.SERVICIOS["moto"].items():
+        precio_formateado = f"{precio:,}".replace(",", ".")
+        caption = f"{nombre}\n${precio_formateado} COP"
+        url_imagen = services_data.url_imagen_servicio(nombre)
+        if url_imagen:
+            send_image_message(numero, url_imagen, caption=caption)
+        else:
+            send_text_message(numero, caption)
 
 
 # ---------------- AGENDAMIENTO ----------------
