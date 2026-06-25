@@ -20,6 +20,8 @@ from flask import Flask, request, jsonify
 from dotenv import load_dotenv
 
 import claude_assistant
+import bot_control
+import services_data
 from whatsapp_api import send_text_message
 
 load_dotenv()
@@ -55,24 +57,38 @@ def recibir_mensaje():
             return jsonify({"status": "ok"}), 200
 
         mensaje = cambio["messages"][0]
-        numero_cliente = mensaje["from"]
+        numero_remitente = mensaje["from"]
         tipo_mensaje = mensaje["type"]
 
-        if tipo_mensaje == "text":
-            texto = mensaje["text"]["body"]
-            # Procesamos en segundo plano: así respondemos a Meta YA, sin
-            # esperar a que Claude (y sus herramientas) terminen de trabajar.
-            hilo = threading.Thread(
-                target=claude_assistant.handle_message,
-                args=(numero_cliente, texto),
-                daemon=True,
-            )
-            hilo.start()
-        else:
+        if tipo_mensaje != "text":
             send_text_message(
-                numero_cliente,
+                numero_remitente,
                 "Por ahora solo puedo leer mensajes de texto 🙏 ¿Me cuentas en palabras qué necesitas?",
             )
+            return jsonify({"status": "ok"}), 200
+
+        texto = mensaje["text"]["body"]
+
+        # Si quien escribe es el dueño, tratamos su mensaje como un COMANDO
+        # de control (pausar/reanudar), no como una conversación con Claude.
+        if services_data.NUMERO_DUENO and numero_remitente == services_data.NUMERO_DUENO:
+            respuesta = bot_control.procesar_comando_dueno(texto)
+            send_text_message(numero_remitente, respuesta)
+            return jsonify({"status": "ok"}), 200
+
+        # Si este cliente está pausado (el dueño lo está atendiendo
+        # personalmente), el bot se queda en silencio.
+        if bot_control.esta_pausado(numero_remitente):
+            return jsonify({"status": "ok"}), 200
+
+        # Procesamos en segundo plano: así respondemos a Meta YA, sin
+        # esperar a que Claude (y sus herramientas) terminen de trabajar.
+        hilo = threading.Thread(
+            target=claude_assistant.handle_message,
+            args=(numero_remitente, texto),
+            daemon=True,
+        )
+        hilo.start()
 
     except (KeyError, IndexError) as e:
         print("⚠️ No se pudo procesar el mensaje entrante:", e, data)

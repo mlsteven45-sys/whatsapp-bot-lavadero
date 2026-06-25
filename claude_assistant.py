@@ -17,6 +17,7 @@ import anthropic
 import services_data
 import booking
 import google_calendar
+import bot_control
 from whatsapp_api import send_text_message, send_image_message
 
 MODELO = "claude-haiku-4-5"
@@ -194,7 +195,8 @@ def _ejecutar_herramienta(nombre_herramienta: str, args: dict, numero: str) -> s
         elif nombre_herramienta == "solicitar_asesor":
             if services_data.NUMERO_DUENO:
                 send_text_message(services_data.NUMERO_DUENO, f"🙋 *Solicitud de asesor*\nEl cliente {numero} quiere hablar con una persona.")
-            return "Aviso enviado al dueño."
+            bot_control.pausar(numero)
+            return "Aviso enviado al dueño. El bot se pausó automáticamente con este cliente por un rato."
 
         return "Herramienta no reconocida."
 
