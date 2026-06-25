@@ -21,6 +21,8 @@ from datetime import datetime, timedelta
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
+import services_data
+
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
 ZONA_HORARIA = "America/Bogota"
 DURACION_CITA_MINUTOS = 60  # duración asumida de cada servicio, en minutos
@@ -49,11 +51,18 @@ def _construir_resumen_y_descripcion(datos: dict):
     servicio = datos.get("servicio", "Servicio")
     numero_cliente = datos.get("numero_cliente", "")
 
+    precio = services_data.SERVICIOS.get("moto", {}).get(servicio)
+    if precio is not None:
+        precio_texto = f"${precio:,}".replace(",", ".") + " COP"
+    else:
+        precio_texto = "No especificado"
+
     resumen = f"Motobon: {nombre} - {servicio}"
     descripcion = (
         f"Nombre: {nombre}\n"
         f"Placa: {placa}\n"
         f"Servicio: {servicio}\n"
+        f"Precio: {precio_texto}\n"
         f"Cliente WhatsApp: {numero_cliente}"
     )
     return resumen, descripcion
