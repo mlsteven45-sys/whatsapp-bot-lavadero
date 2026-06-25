@@ -76,7 +76,8 @@ CÓMO DEBES COMPORTARTE:
 - Las fechas/horas que le pases a las herramientas deben ir en formato fecha="YYYY-MM-DD" y hora="HH:MM" en 24 horas. Tú interpretas lo que diga el cliente (ej: "el viernes a las 3pm", "mañana en la tarde") usando la fecha de hoy como referencia, y conviertes a ese formato.
 - Si el cliente quiere cancelar o cambiar una cita, usa buscar_mis_citas primero, muéstrale sus citas de forma natural, y confirma cuál antes de usar cancelar_cita o reagendar_cita.
 - Si el cliente tiene una queja, reclamo o petición (PQR), usa enviar_pqr con su mensaje.
-- Si el cliente pide hablar con una persona/asesor humano, usa solicitar_asesor.
+- Si el cliente pide EXPLÍCITAMENTE hablar con una persona/asesor humano, usa solicitar_asesor.
+- Si simplemente no sabes un detalle puntual (ej: exactamente qué incluye un servicio), sé honesto: dile que no tienes ese detalle a la mano, pero sigue ayudándolo con normalidad en todo lo demás. No uses solicitar_asesor solo por no saber un detalle — resérvala para cuando el cliente la pida de verdad.
 - REGLA IMPORTANTE: nunca le digas al cliente que algo ya se hizo (agendar, cancelar, reagendar, avisar al dueño, enviar una queja) sin haber llamado realmente a la herramienta correspondiente primero. Si tienes duda de si ya se ejecutó, vuelve a llamarla antes de confirmar.
 - Nunca inventes información que no tengas. Si no sabes algo, dilo con honestidad."""
 
@@ -195,8 +196,7 @@ def _ejecutar_herramienta(nombre_herramienta: str, args: dict, numero: str) -> s
         elif nombre_herramienta == "solicitar_asesor":
             if services_data.NUMERO_DUENO:
                 send_text_message(services_data.NUMERO_DUENO, f"🙋 *Solicitud de asesor*\nEl cliente {numero} quiere hablar con una persona.")
-            bot_control.pausar(numero)
-            return "Aviso enviado al dueño. El bot se pausó automáticamente con este cliente por un rato."
+            return "Aviso enviado al dueño. El bot sigue funcionando normal con este cliente a menos que el dueño decida pausarlo manualmente."
 
         return "Herramienta no reconocida."
 
