@@ -9,6 +9,7 @@ El historial de conversación se guarda en memoria por número de WhatsApp
 (se reinicia si el servidor se reinicia; aceptable para esta escala).
 """
 import os
+import threading
 from datetime import datetime, timedelta
 
 import anthropic
@@ -24,6 +25,20 @@ MAX_MENSAJES_HISTORIAL = 20  # cuántos mensajes recientes recordamos por client
 historial_conversaciones = {}  # { "numero": [ {"role":..., "content":...}, ... ] }
 
 _cliente_anthropic = None
+
+# Un "candado" por número de WhatsApp: evita que dos mensajes del MISMO
+# cliente se procesen al mismo tiempo en hilos distintos (por ejemplo, si
+# Meta llega a reintentar la entrega de un mensaje). Clientes distintos sí
+# se siguen procesando en paralelo sin problema.
+_candados_por_numero = {}
+_candado_global = threading.Lock()
+
+
+def _obtener_candado(numero: str) -> threading.Lock:
+    with _candado_global:
+        if numero not in _candados_por_numero:
+            _candados_por_numero[numero] = threading.Lock()
+        return _candados_por_numero[numero]
 
 
 def _get_cliente():
@@ -189,6 +204,12 @@ def _ejecutar_herramienta(nombre_herramienta: str, args: dict, numero: str) -> s
 
 def handle_message(numero: str, texto: str):
     """Punto de entrada: procesa un mensaje de texto del cliente con Claude y responde por WhatsApp."""
+    candado = _obtener_candado(numero)
+    with candado:
+        _procesar_mensaje(numero, texto)
+
+
+def _procesar_mensaje(numero: str, texto: str):
     if numero not in historial_conversaciones:
         historial_conversaciones[numero] = []
     historial = historial_conversaciones[numero]

@@ -1,13 +1,21 @@
 """
 Webhook de Flask para el bot de WhatsApp de Motobon.
 
-El bot ahora entiende lenguaje natural usando la API de Claude (ver
+El bot entiende lenguaje natural usando la API de Claude (ver
 claude_assistant.py) en vez de un menú de opciones fijas con botones.
 
+IMPORTANTE: el procesamiento con Claude (y las herramientas que pueda usar,
+como Google Calendar) puede tardar varios segundos. Si no respondemos a
+Meta de inmediato, Meta puede reintentar el envío del mismo mensaje varias
+veces, causando respuestas duplicadas o confusas. Por eso el procesamiento
+real se hace en un hilo en segundo plano (threading), y esta ruta responde
+"200 OK" a Meta de inmediato, sin esperar a que Claude termine.
+
 - GET  /webhook  -> verificación inicial que pide Meta
-- POST /webhook  -> recibe cada mensaje nuevo y lo procesa con Claude
+- POST /webhook  -> recibe cada mensaje nuevo y lo procesa con Claude (async)
 """
 import os
+import threading
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv
 
@@ -52,7 +60,14 @@ def recibir_mensaje():
 
         if tipo_mensaje == "text":
             texto = mensaje["text"]["body"]
-            claude_assistant.handle_message(numero_cliente, texto)
+            # Procesamos en segundo plano: así respondemos a Meta YA, sin
+            # esperar a que Claude (y sus herramientas) terminen de trabajar.
+            hilo = threading.Thread(
+                target=claude_assistant.handle_message,
+                args=(numero_cliente, texto),
+                daemon=True,
+            )
+            hilo.start()
         else:
             send_text_message(
                 numero_cliente,
