@@ -2,14 +2,17 @@
 Integración con Google Calendar: crea, busca, cancela y reagenda eventos
 para las citas de Motobon.
 
-Usa una "Service Account" de Google (un usuario robot) en lugar de pedirle
-login a una persona. Las credenciales se leen desde la variable de entorno
-GOOGLE_SERVICE_ACCOUNT_JSON, y el calendario de destino desde la variable
+Usa una "Service Account" de Google (un usuario robot). Las credenciales
+se leen desde GOOGLE_SERVICE_ACCOUNT_JSON, y el calendario de destino desde
 GOOGLE_CALENDAR_ID.
 
-Si algo falla aquí (credenciales mal puestas, fecha no interpretable, etc.),
-las funciones devuelven None/False/[] en vez de lanzar un error — así un
-problema con Calendar nunca rompe la conversación del bot por WhatsApp.
+Las funciones "_estructurado" reciben fecha en formato "YYYY-MM-DD" y hora
+en formato 24h "HH:MM" — ya interpretadas por Claude a partir de lo que
+escribió el cliente en lenguaje natural (ej: "el viernes a las 3pm").
+Esto es más confiable que tratar de adivinar formatos de texto libre.
+
+Si algo falla aquí, las funciones devuelven None/False/[] en vez de lanzar
+un error — así un problema con Calendar nunca rompe la conversación del bot.
 """
 import os
 import json
@@ -22,9 +25,6 @@ SCOPES = ["https://www.googleapis.com/auth/calendar"]
 ZONA_HORARIA = "America/Bogota"
 DURACION_CITA_MINUTOS = 60  # duración asumida de cada servicio, en minutos
 
-FORMATOS_FECHA = ["%d/%m/%Y", "%d-%m-%Y"]
-FORMATOS_HORA = ["%I:%M %p", "%I:%M%p", "%H:%M"]
-
 
 def _obtener_servicio_calendar():
     """Crea el cliente autenticado de la API de Google Calendar."""
@@ -34,30 +34,12 @@ def _obtener_servicio_calendar():
     return build("calendar", "v3", credentials=credenciales)
 
 
-def _parsear_fecha_hora(fecha_texto: str, hora_texto: str):
-    """Convierte texto libre de fecha y hora en un datetime real, o None si falla."""
-    fecha = None
-    for formato in FORMATOS_FECHA:
-        try:
-            fecha = datetime.strptime(fecha_texto.strip(), formato)
-            break
-        except ValueError:
-            continue
-    if fecha is None:
+def _construir_datetime_estructurado(fecha_iso: str, hora_iso: str):
+    """fecha_iso: 'YYYY-MM-DD', hora_iso: 'HH:MM' (24h). Devuelve datetime o None si es inválido."""
+    try:
+        return datetime.strptime(f"{fecha_iso.strip()} {hora_iso.strip()}", "%Y-%m-%d %H:%M")
+    except (ValueError, AttributeError):
         return None
-
-    hora = None
-    texto_hora_normalizado = hora_texto.strip().upper().replace(".", "")
-    for formato in FORMATOS_HORA:
-        try:
-            hora = datetime.strptime(texto_hora_normalizado, formato)
-            break
-        except ValueError:
-            continue
-    if hora is None:
-        return None
-
-    return fecha.replace(hour=hora.hour, minute=hora.minute)
 
 
 def _construir_resumen_y_descripcion(datos: dict):
@@ -77,16 +59,15 @@ def _construir_resumen_y_descripcion(datos: dict):
     return resumen, descripcion
 
 
-def crear_evento(datos: dict):
+def crear_evento_estructurado(datos: dict, fecha_iso: str, hora_iso: str):
     """
-    Crea un evento en el Google Calendar de Motobon a partir de los datos
-    de la cita (nombre, placa, servicio, fecha, hora, número del cliente).
-    Devuelve el ID del evento creado, o None si algo falló.
+    Crea un evento en Google Calendar a partir de fecha/hora ya estructuradas
+    (formato YYYY-MM-DD y HH:MM 24h). Devuelve el ID del evento, o None si falló.
     """
     try:
-        inicio = _parsear_fecha_hora(datos.get("fecha", ""), datos.get("hora", ""))
+        inicio = _construir_datetime_estructurado(fecha_iso, hora_iso)
         if inicio is None:
-            print("⚠️ Google Calendar: no se pudo interpretar fecha/hora:", datos)
+            print("⚠️ Google Calendar: fecha/hora estructurada inválida:", fecha_iso, hora_iso)
             return None
 
         fin = inicio + timedelta(minutes=DURACION_CITA_MINUTOS)
@@ -111,8 +92,7 @@ def crear_evento(datos: dict):
 
 def buscar_eventos_por_cliente(numero_cliente: str, max_resultados: int = 10) -> list:
     """
-    Busca eventos futuros que mencionen el número de este cliente (se
-    guarda en la descripción de cada evento al crearlo).
+    Busca eventos futuros que mencionen el número de este cliente.
     Devuelve una lista de dicts: [{"id", "resumen", "inicio" (datetime)}, ...]
     """
     try:
@@ -158,10 +138,10 @@ def eliminar_evento(event_id: str) -> bool:
         return False
 
 
-def actualizar_evento(event_id: str, fecha_texto: str, hora_texto: str) -> bool:
+def actualizar_evento_estructurado(event_id: str, fecha_iso: str, hora_iso: str) -> bool:
     """Cambia la fecha/hora de un evento existente. Devuelve True si lo logró."""
     try:
-        inicio = _parsear_fecha_hora(fecha_texto, hora_texto)
+        inicio = _construir_datetime_estructurado(fecha_iso, hora_iso)
         if inicio is None:
             return False
         fin = inicio + timedelta(minutes=DURACION_CITA_MINUTOS)

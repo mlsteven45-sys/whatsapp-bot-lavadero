@@ -1,14 +1,18 @@
 """
-Webhook de Flask para el bot de WhatsApp del lavadero.
+Webhook de Flask para el bot de WhatsApp de Motobon.
 
-- GET  /webhook  -> verificación inicial que pide Meta al configurar el webhook
-- POST /webhook  -> recibe cada mensaje nuevo que un cliente le envía al bot
+El bot ahora entiende lenguaje natural usando la API de Claude (ver
+claude_assistant.py) en vez de un menú de opciones fijas con botones.
+
+- GET  /webhook  -> verificación inicial que pide Meta
+- POST /webhook  -> recibe cada mensaje nuevo y lo procesa con Claude
 """
 import os
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv
 
-import conversation_manager
+import claude_assistant
+from whatsapp_api import send_text_message
 
 load_dotenv()
 
@@ -46,23 +50,14 @@ def recibir_mensaje():
         numero_cliente = mensaje["from"]
         tipo_mensaje = mensaje["type"]
 
-        texto = None
-        interactive_id = None
-
         if tipo_mensaje == "text":
             texto = mensaje["text"]["body"]
-        elif tipo_mensaje == "interactive":
-            interactive = mensaje["interactive"]
-            if interactive["type"] == "button_reply":
-                interactive_id = interactive["button_reply"]["id"]
-            elif interactive["type"] == "list_reply":
-                interactive_id = interactive["list_reply"]["id"]
-
-        conversation_manager.handle_incoming_message(
-            numero=numero_cliente,
-            texto=texto,
-            interactive_id=interactive_id,
-        )
+            claude_assistant.handle_message(numero_cliente, texto)
+        else:
+            send_text_message(
+                numero_cliente,
+                "Por ahora solo puedo leer mensajes de texto 🙏 ¿Me cuentas en palabras qué necesitas?",
+            )
 
     except (KeyError, IndexError) as e:
         print("⚠️ No se pudo procesar el mensaje entrante:", e, data)
