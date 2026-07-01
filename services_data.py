@@ -13,6 +13,18 @@ UBICACION = (
     "Ver en mapa: https://www.google.com/maps/search/?api=1&query=Motobon+detailing+Cl.+80+%2345-91+Aranjuez+Medellin"
 )
 
+PROMOCION_ACTIVA = {
+    "mensaje_pauta": "¡Hola! Quiero más información.",
+    "descripcion": (
+        "Full lavada de toda la moto con shampoo de pH neutro, full desengrasado de toda la moto, "
+        "restauración de todas las partes negras plásticas con producto premium, "
+        "desmanchada, pulida y brillada de toda la moto."
+    ),
+    "precio_normal": 90000,
+    "precio_promo": 60000,
+    "servicio_base": "Lavado Súper Premium",
+}
+
 DIFERENCIAS_SERVICIOS = """
 *¿Cuál es la diferencia entre los servicios?*
 
@@ -41,6 +53,7 @@ SERVICIOS = {
         "Lavado Premium": 35000,
         "Lavado Súper Premium": 90000,
         "Cerámico": 390000,
+        "PPF (Paint Protection Film)": None,  # Precio por cotización
     },
 }
 
@@ -71,6 +84,15 @@ DESCRIPCIONES_SERVICIOS = {
         "eliminación de microrayones e imperfecciones y finalmente aplicación del recubrimiento cerámico. "
         "Tiempo aproximado: 2 días."
     ),
+    "PPF (Paint Protection Film)": (
+        "Aplicación de película de protección de pintura (Paint Protection Film) de alta gama. "
+        "Beneficios: protección antirrayones y antiimpactos (absorbe el impacto de piedras, gravilla y ramas "
+        "evitando desportilladuras), autorregeneración de rayones superficiales con calor, "
+        "protección solar contra rayos UV para preservar el color y brillo original, "
+        "fácil limpieza al repeler mugre, insectos y grasa, y conservación del valor de reventa de la moto. "
+        "Tiempo aproximado: 2 a 3 días. "
+        "Precio: según cotización — comunicarse con un asesor."
+    ),
 }
 
 # Nombre del archivo de imagen (dentro de la carpeta /static) para cada servicio.
@@ -79,6 +101,7 @@ IMAGENES_SERVICIOS = {
     "Lavado Premium": "lavado_premium.jpeg",
     "Lavado Súper Premium": "lavado_super_premium.jpeg",
     "Cerámico": "ceramico.jpeg",
+    "PPF (Paint Protection Film)": None,  # Sin imagen por ahora
 }
 
 
@@ -90,8 +113,11 @@ def formatear_precios(tipo_vehiculo: str = "moto") -> str:
 
     lineas = []
     for nombre, precio in servicios.items():
-        precio_formateado = f"{precio:,}".replace(",", ".")
-        lineas.append(f"• {nombre}: ${precio_formateado} COP")
+        if precio is None:
+            lineas.append(f"• {nombre}: Según cotización (contactar asesor)")
+        else:
+            precio_formateado = f"{precio:,}".replace(",", ".")
+            lineas.append(f"• {nombre}: ${precio_formateado} COP")
     return "\n".join(lineas)
 
 

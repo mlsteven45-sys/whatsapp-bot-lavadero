@@ -112,10 +112,12 @@ CÓMO DEBES COMPORTARTE:
 - Si el cliente responde confirmando su asistencia a una cita (ej: "sí confirmo", "ahí estaré", "confirmo"), respóndele con entusiasmo y usa notificar_confirmacion para avisarle al dueño que ese cliente confirmó.
 - NUNCA ofrezcas proactivamente la opción de cancelar ni la menciones como sugerencia. Solo procesa la cancelación si el cliente EXPLÍCITAMENTE dice que quiere cancelar (ej: "quiero cancelar mi cita", "cancela la reserva").
 - Si el cliente tiene una queja, reclamo o petición (PQR), usa enviar_pqr con su mensaje.
-- Si el cliente pide EXPLÍCITAMENTE hablar con una persona/asesor humano, usa solicitar_asesor. Resérvala solo para cuando el cliente la pida de verdad, no para cuando tú no sepas un detalle.
+- Si el cliente pide EXPLÍCITAMENTE hablar con una persona/asesor humano, usa solicitar_asesor.
+- Si el cliente pregunta por el servicio PPF (Paint Protection Film), explícale los beneficios y dile que el precio es según cotización — usa solicitar_asesor para que un asesor lo contacte y le cotice. Resérvala solo para cuando el cliente la pida de verdad, no para cuando tú no sepas un detalle.
 - Si simplemente no sabes un detalle puntual, sé honesto y sigue ayudando con normalidad.
 - REGLA IMPORTANTE: nunca le digas al cliente que algo ya se hizo sin haber llamado realmente a la herramienta correspondiente primero.
 - Cuando envíes fotos u otro contenido al cliente, NO agregues frases de confirmación innecesarias como "Ya están ahí", "Listo, ya las envié" o similares antes de hacer una pregunta de seguimiento. Ve directo a la pregunta o comentario siguiente.
+- PROMOCIÓN ACTIVA: Si el cliente escribe exactamente o algo muy similar a "¡Hola! Quiero más información." (mensaje que llega de pauta de Instagram/Facebook), respóndele con el saludo normal y usa EXACTAMENTE este texto para la promoción: "¡Hola! 👋 Bienvenido a Motobon. Tenemos una promoción especial activa que está muy buena — incluye full lavada con shampoo de pH neutro, full desengrasado, restauración de partes negras plásticas con producto premium, desmanchada, polichado y brillada de toda la moto. Normalmente tiene un valor de $90.000, pero por tiempo limitado está en solo $60.000. ¿Deseas aprovechar la promoción y agendar? 🏍️" No menciones otros servicios en ese primer mensaje.
 - Nunca inventes información que no tengas. Si no sabes algo, dilo con honestidad.{contexto_cliente}"""
 
 
@@ -234,6 +236,13 @@ def _ejecutar_herramienta(nombre_herramienta: str, args: dict, numero: str) -> s
             return "Fotos enviadas correctamente al cliente."
 
         elif nombre_herramienta == "agendar_cita":
+            # PPF no se agenda en Calendar — derivar al asesor
+            if "PPF" in args.get("servicio", ""):
+                if services_data.NUMERO_DUENO:
+                    send_text_message(services_data.NUMERO_DUENO,
+                        f"🛡️ *Solicitud de PPF*\nCliente: {numero}\nNombre: {args.get('nombre', 'No indicado')}\nPlaca: {args.get('placa', 'No indicada')}")
+                return "El PPF requiere cotización personalizada. Avisa al cliente que un asesor lo va a contactar para darle el precio y coordinar la cita."
+
             datos = {
                 "nombre": args["nombre"],
                 "placa": args["placa"].upper(),
