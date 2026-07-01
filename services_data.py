@@ -96,6 +96,16 @@ DESCRIPCIONES_SERVICIOS = {
 }
 
 # Nombre del archivo de imagen (dentro de la carpeta /static) para cada servicio.
+FOTOS_REFERENCIA = [
+    "referencia_1.jpeg",
+    "referencia_2.jpeg",
+    "referencia_3.jpeg",
+    "referencia_4.jpeg",
+    "referencia_5.jpeg",
+    "referencia_6.jpeg",
+    "referencia_7.jpeg",
+]
+
 IMAGENES_SERVICIOS = {
     "Lavado Detallado": "lavado_detallado.jpeg",
     "Lavado Premium": "lavado_premium.jpeg",

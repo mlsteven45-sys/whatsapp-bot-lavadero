@@ -107,7 +107,7 @@ CÓMO DEBES COMPORTARTE:
 - Cuando el cliente dude o posponga, sé persuasivo pero sin presionar: usa frases como "súper, te esperamos por acá 🍀", "cuando quieras aquí estamos 🏍️", o similares — cálidas y que inviten a volver.
 - Si el cliente pregunta por la ubicación o cómo llegar, usa EXACTAMENTE esta referencia: "Si te ubicas en el sector, buscas la estación Manrique del Metro Plus y bajas tan solo una cuadrita hasta el semáforo 🚦 ¡Inmediatamente nos verás!"
 - Nunca des por perdido a un cliente que duda — siempre cierra con algo positivo que lo invite a regresar.
-- Si el cliente dice que queda lejos, que no puede ir, o que lo deja para después: NO sigas preguntando si quiere agendar. Cierra con algo corto y cálido como "¡Súper, te esperamos por acá! 🍀" y nada más.
+- Si el cliente dice que queda lejos o que Motobon le queda difícil: convéncelo de forma natural mencionando que estamos a solo 15 minutos del centro de Medellín, que contamos con una zona de espera cómoda con televisor y agua mientras su moto queda lista, y que el viaje vale totalmente la pena por la calidad del servicio. Cierra invitándolo a agendar. Ejemplo de tono: "¡No te preocupes! Estamos a tan solo 15 minutos del centro de Medellín 🏍️ Y mientras tu moto queda impecable, puedes esperar aquí con nosotros — tenemos zona de espera con televisor y agua. ¡Vale la pena el viaje, te lo garantizamos! ¿Te animamos a agendar?" — adáptalo según el contexto pero siempre mencionando los 15 min y la zona de espera.
 - Si el cliente pregunta cómo llegar o pide un punto de referencia, usa EXACTAMENTE esto: "Si te ubicas en el sector, buscas la estación Manrique del Metro Plus y bajas tan solo una cuadrita hasta el semáforo 🚦 ¡Inmediatamente nos verás!" 
 - Si preguntan por un servicio específico, responde con la descripción detallada, el precio y el tiempo estimado.
 - Si preguntan por métodos de pago, responde directamente con la información de arriba.
@@ -142,6 +142,11 @@ HERRAMIENTAS = [
     {
         "name": "mostrar_fotos_servicios",
         "description": "Envía al cliente fotos de los servicios disponibles con sus precios. Úsala cuando el cliente quiera ver cómo se ven los servicios.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "mostrar_fotos_referencia",
+        "description": "Envía fotos de trabajos realizados como referencia general. Úsala cuando el cliente pida ver referencias, trabajos anteriores, resultados o ejemplos del trabajo de Motobon.",
         "input_schema": {"type": "object", "properties": {}},
     },
     {
@@ -217,7 +222,13 @@ HERRAMIENTAS = [
 def _ejecutar_herramienta(nombre_herramienta: str, args: dict, numero: str) -> str:
     """Ejecuta la acción real y devuelve un texto de resultado para que Claude lo use en su respuesta."""
     try:
-        if nombre_herramienta == "verificar_disponibilidad":
+        if nombre_herramienta == "mostrar_fotos_referencia":
+            for archivo in services_data.FOTOS_REFERENCIA:
+                url = f"{services_data.BASE_URL}/static/{archivo}"
+                send_image_message(numero, url)
+            return "Fotos de referencia enviadas al cliente."
+
+        elif nombre_herramienta == "verificar_disponibilidad":
             cantidad = google_calendar.contar_citas_en_franja(args["fecha"], args["hora"])
             disponibles = services_data.MAX_CITAS_POR_HORA - cantidad
             if disponibles > 0:
