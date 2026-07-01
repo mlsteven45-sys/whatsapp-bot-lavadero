@@ -6,20 +6,23 @@ Motobon es un negocio especializado únicamente en motos (no atiende carros).
 
 NOMBRE_NEGOCIO = "Motobon"
 
-HORARIO_ATENCION = "Todos los días: 9:00 AM - 8:00 PM (Incluye domingos y festivos)"
+HORARIO_ATENCION = "Todos los días: 9:00 AM - 8:00 PM"
 
 UBICACION = (
     "📍 Calle 80 #45-91, Campo Valdés, Aranjuez, Medellín, Antioquia\n"
     "Ver en mapa: https://www.google.com/maps/search/?api=1&query=Motobon+detailing+Cl.+80+%2345-91+Aranjuez+Medellin"
 )
 
+METODOS_PAGO = "Efectivo, transferencia bancaria y tarjeta débito/crédito."
+
 # Número de WhatsApp PERSONAL del dueño, donde recibe avisos de "asesor" y PQR.
-# Formato: código de país + número, sin "+", sin espacios. Ej: "573001234567"
-# Si se deja vacío (""), el bot simplemente no envía esas notificaciones.
 NUMERO_DUENO = "573015747945"
 
 # URL base donde está corriendo el bot en producción (Render).
 BASE_URL = "https://motobot-7iig.onrender.com"
+
+# Máximo de citas permitidas por franja horaria de 1 hora
+MAX_CITAS_POR_HORA = 2
 
 # Precios en pesos colombianos (COP).
 SERVICIOS = {
@@ -29,6 +32,35 @@ SERVICIOS = {
         "Lavado Súper Premium": 90000,
         "Cerámico": 390000,
     },
+}
+
+# Descripción técnica y detallada de cada servicio.
+DESCRIPCIONES_SERVICIOS = {
+    "Lavado Detallado": (
+        "Lavado completo con shampoo de pH neutro, desengrasado total de la moto "
+        "(incluyendo kit de arrastre) e hidratación de partes negras. "
+        "Tiempo aproximado: 1 a 1 hora y media."
+    ),
+    "Lavado Premium": (
+        "Lavado completo con shampoo de pH neutro, desengrasado total (incluyendo kit de arrastre), "
+        "hidratación y restauración de partes negras, y brillado a mano con cera protectora "
+        "Meguiar's profesional. "
+        "Tiempo aproximado: 1 a 1 hora y media."
+    ),
+    "Lavado Súper Premium": (
+        "Lavado profundo con shampoo de pH neutro, desengrasado profundo (incluyendo kit de arrastre), "
+        "restauración de partes negras con producto premium, desmanchado y descontaminación de la pintura, "
+        "pulido y brillado con máquina profesional. "
+        "Tiempo aproximado: 1 a 1 hora y media."
+    ),
+    "Cerámico": (
+        "Lavado profundo con shampoo profesional de pH neutro, desengrasado completo de toda la moto "
+        "(incluyendo kit de arrastre), restauración de partes negras con producto premium, "
+        "preparación de la pintura para la aplicación del recubrimiento cerámico, "
+        "detallado completo con desmanchado total, descontaminación de la pintura, "
+        "eliminación de microrayones e imperfecciones y finalmente aplicación del recubrimiento cerámico. "
+        "Tiempo aproximado: 2 días."
+    ),
 }
 
 # Nombre del archivo de imagen (dentro de la carpeta /static) para cada servicio.

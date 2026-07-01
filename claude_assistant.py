@@ -57,32 +57,61 @@ def _fecha_actual_bogota() -> str:
 
 
 def _construir_system_prompt() -> str:
+    # Construir el catálogo detallado con descripción, precio y tiempo por servicio
+    catalogo = []
+    for nombre, precio in services_data.SERVICIOS["moto"].items():
+        precio_fmt = f"${precio:,}".replace(",", ".") + " COP"
+        descripcion = services_data.DESCRIPCIONES_SERVICIOS.get(nombre, "")
+        catalogo.append(f"• *{nombre}* — {precio_fmt}\n  {descripcion}")
+    catalogo_texto = "\n\n".join(catalogo)
+
     return f"""Eres el asistente virtual de {services_data.NOMBRE_NEGOCIO}, un negocio de lavado y detallado de motos en Medellín, Colombia. Hablas por WhatsApp directamente con los clientes.
 
 INFORMACIÓN DEL NEGOCIO:
 - Horario de atención: {services_data.HORARIO_ATENCION}
 - Ubicación: {services_data.UBICACION}
-- Servicios y precios:
-{services_data.formatear_precios("moto")}
+- Métodos de pago: {services_data.METODOS_PAGO}
+
+SERVICIOS (con descripción detallada, precio y tiempo estimado):
+{catalogo_texto}
+
+CAPACIDAD:
+- Máximo {services_data.MAX_CITAS_POR_HORA} motos por franja horaria de 1 hora.
+- Antes de confirmar una cita, SIEMPRE usa la herramienta verificar_disponibilidad para consultar si hay cupo disponible en la fecha y hora solicitadas.
+- Si no hay cupo, infórmale al cliente de forma amable y sugiérele otra hora.
 
 FECHA DE HOY: {_fecha_actual_bogota()}
 
 CÓMO DEBES COMPORTARTE:
-- Habla como una persona real y amable, en español colombiano natural, cercano pero profesional. No suenes robótico ni repitas frases de menú.
+- Habla como una persona real y amable, en español colombiano natural, cercano pero profesional. No suenes robótico.
 - Usa emojis con moderación, solo cuando se sientan naturales.
-- Respuestas cortas y claras, como en una conversación real de WhatsApp (no párrafos largos).
-- Si preguntan por servicios o precios, responde directamente con la información de arriba. Si el cliente parece interesado, ofrece mostrarle fotos con la herramienta mostrar_fotos_servicios.
-- Para agendar una cita necesitas 4 datos: nombre completo, placa de la moto, servicio deseado, fecha y hora. Pregúntalos de forma natural (el cliente puede darlos todos de una vez o por partes). Antes de llamar a agendar_cita, repite el resumen y espera que el cliente confirme explícitamente.
-- Las fechas/horas que le pases a las herramientas deben ir en formato fecha="YYYY-MM-DD" y hora="HH:MM" en 24 horas. Tú interpretas lo que diga el cliente (ej: "el viernes a las 3pm", "mañana en la tarde") usando la fecha de hoy como referencia, y conviertes a ese formato.
-- Si el cliente quiere cancelar o cambiar una cita, usa buscar_mis_citas primero, muéstrale sus citas de forma natural, y confirma cuál antes de usar cancelar_cita o reagendar_cita.
+- Respuestas cortas y claras, como en una conversación real de WhatsApp.
+- Si preguntan por un servicio específico, responde con la descripción detallada, el precio y el tiempo estimado.
+- Si preguntan por métodos de pago, responde directamente con la información de arriba.
+- Si el cliente parece interesado en ver los servicios visualmente, ofrece mostrarle fotos con la herramienta mostrar_fotos_servicios.
+- Para agendar una cita necesitas 4 cosas: nombre completo, placa de la moto, servicio deseado, fecha y hora. Pregúntalos de forma natural. Antes de llamar a agendar_cita, repite el resumen y espera que el cliente confirme explícitamente.
+- Las fechas/horas que le pases a las herramientas deben ir en formato fecha="YYYY-MM-DD" y hora="HH:MM" en 24 horas. Tú interpretas lo que diga el cliente (ej: "el viernes a las 3pm") usando la fecha de hoy como referencia.
+- Si el cliente quiere cancelar o cambiar una cita, usa buscar_mis_citas primero.
 - Si el cliente tiene una queja, reclamo o petición (PQR), usa enviar_pqr con su mensaje.
-- Si el cliente pide EXPLÍCITAMENTE hablar con una persona/asesor humano, usa solicitar_asesor.
-- Si simplemente no sabes un detalle puntual (ej: exactamente qué incluye un servicio), sé honesto: dile que no tienes ese detalle a la mano, pero sigue ayudándolo con normalidad en todo lo demás. No uses solicitar_asesor solo por no saber un detalle — resérvala para cuando el cliente la pida de verdad.
-- REGLA IMPORTANTE: nunca le digas al cliente que algo ya se hizo (agendar, cancelar, reagendar, avisar al dueño, enviar una queja) sin haber llamado realmente a la herramienta correspondiente primero. Si tienes duda de si ya se ejecutó, vuelve a llamarla antes de confirmar.
+- Si el cliente pide EXPLÍCITAMENTE hablar con una persona/asesor humano, usa solicitar_asesor. Resérvala solo para cuando el cliente la pida de verdad, no para cuando tú no sepas un detalle.
+- Si simplemente no sabes un detalle puntual, sé honesto y sigue ayudando con normalidad.
+- REGLA IMPORTANTE: nunca le digas al cliente que algo ya se hizo sin haber llamado realmente a la herramienta correspondiente primero.
 - Nunca inventes información que no tengas. Si no sabes algo, dilo con honestidad."""
 
 
 HERRAMIENTAS = [
+    {
+        "name": "verificar_disponibilidad",
+        "description": "Verifica si hay cupo disponible en una fecha y hora específica (máximo 2 motos por hora). Úsala SIEMPRE antes de agendar_cita.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "fecha": {"type": "string", "description": "Fecha en formato YYYY-MM-DD"},
+                "hora": {"type": "string", "description": "Hora en formato 24h HH:MM"},
+            },
+            "required": ["fecha", "hora"],
+        },
+    },
     {
         "name": "mostrar_fotos_servicios",
         "description": "Envía al cliente fotos de los servicios disponibles con sus precios. Úsala cuando el cliente quiera ver cómo se ven los servicios.",
@@ -150,7 +179,14 @@ HERRAMIENTAS = [
 def _ejecutar_herramienta(nombre_herramienta: str, args: dict, numero: str) -> str:
     """Ejecuta la acción real y devuelve un texto de resultado para que Claude lo use en su respuesta."""
     try:
-        if nombre_herramienta == "mostrar_fotos_servicios":
+        if nombre_herramienta == "verificar_disponibilidad":
+            cantidad = google_calendar.contar_citas_en_franja(args["fecha"], args["hora"])
+            disponibles = services_data.MAX_CITAS_POR_HORA - cantidad
+            if disponibles > 0:
+                return f"Hay cupo disponible para esa hora ({disponibles} de {services_data.MAX_CITAS_POR_HORA} espacios libres). Puedes proceder a agendar."
+            return f"No hay cupo disponible para esa hora (ya hay {cantidad} motos agendadas y el máximo es {services_data.MAX_CITAS_POR_HORA}). Sugiere al cliente otra hora."
+
+        elif nombre_herramienta == "mostrar_fotos_servicios":
             for nombre_serv, precio in services_data.SERVICIOS["moto"].items():
                 precio_fmt = f"{precio:,}".replace(",", ".")
                 url_imagen = services_data.url_imagen_servicio(nombre_serv)

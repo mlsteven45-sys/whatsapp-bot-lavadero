@@ -68,6 +68,34 @@ def _construir_resumen_y_descripcion(datos: dict):
     return resumen, descripcion
 
 
+def contar_citas_en_franja(fecha_iso: str, hora_iso: str) -> int:
+    """
+    Cuenta cuántos eventos hay ya agendados en la franja horaria de 1 hora
+    que empieza en fecha_iso/hora_iso. Devuelve 0 si falla la consulta.
+    """
+    try:
+        inicio = _construir_datetime_estructurado(fecha_iso, hora_iso)
+        if inicio is None:
+            return 0
+        fin = inicio + timedelta(hours=1)
+
+        servicio_calendar = _obtener_servicio_calendar()
+        calendar_id = os.environ["GOOGLE_CALENDAR_ID"]
+
+        resultado = servicio_calendar.events().list(
+            calendarId=calendar_id,
+            timeMin=inicio.isoformat() + "-05:00",
+            timeMax=fin.isoformat() + "-05:00",
+            singleEvents=True,
+        ).execute()
+
+        return len(resultado.get("items", []))
+
+    except Exception as error:
+        print("⚠️ Error al contar citas en franja:", error)
+        return 0
+
+
 def crear_evento_estructurado(datos: dict, fecha_iso: str, hora_iso: str):
     """
     Crea un evento en Google Calendar a partir de fecha/hora ya estructuradas
