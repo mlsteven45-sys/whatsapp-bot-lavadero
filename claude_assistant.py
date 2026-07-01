@@ -87,6 +87,9 @@ INFORMACIÓN DEL NEGOCIO:
 - Ubicación: {services_data.UBICACION}
 - Métodos de pago: {services_data.METODOS_PAGO}
 
+DIFERENCIAS ENTRE SERVICIOS (úsala cuando el cliente pregunte qué diferencia hay entre ellos):
+{services_data.DIFERENCIAS_SERVICIOS}
+
 SERVICIOS (con descripción detallada, precio y tiempo estimado):
 {catalogo_texto}
 
