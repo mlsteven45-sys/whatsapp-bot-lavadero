@@ -60,6 +60,13 @@ def recibir_mensaje():
         numero_remitente = mensaje["from"]
         tipo_mensaje = mensaje["type"]
 
+        if tipo_mensaje == "audio":
+            send_text_message(
+                numero_remitente,
+                "¡Hola! Por el momento no puedo escuchar audios 😊 ¿Me escribes tu mensaje? Con gusto te ayudo.",
+            )
+            return jsonify({"status": "ok"}), 200
+
         if tipo_mensaje != "text":
             send_text_message(
                 numero_remitente,
