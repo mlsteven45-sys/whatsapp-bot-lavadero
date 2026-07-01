@@ -265,7 +265,10 @@ def _ejecutar_herramienta(nombre_herramienta: str, args: dict, numero: str) -> s
                     hora_legible = args["hora"]
 
                 precio = services_data.SERVICIOS.get("moto", {}).get(args["servicio"])
-                precio_texto = f"${precio:,}".replace(",", ".") + " COP" if precio else "No especificado"
+                if precio is not None:
+                    precio_texto = f"${precio:,}".replace(",", ".") + " COP"
+                else:
+                    precio_texto = "Según cotización"
 
                 mensaje_dueno = (
                     f"📅 *Nueva cita agendada*\n\n"

@@ -55,7 +55,7 @@ def _construir_resumen_y_descripcion(datos: dict):
     if precio is not None:
         precio_texto = f"${precio:,}".replace(",", ".") + " COP"
     else:
-        precio_texto = "No especificado"
+        precio_texto = "Según cotización"
 
     resumen = f"Motobon: {nombre} - {servicio}"
     descripcion = (
