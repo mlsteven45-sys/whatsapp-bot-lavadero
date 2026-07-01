@@ -24,10 +24,10 @@ import google_calendar
 
 ARCHIVO_NOTIFICACIONES = os.path.join(os.path.dirname(__file__), "notificaciones_enviadas.json")
 
-MINUTOS_ANTES_RECORDATORIO = 2     # cuándo enviar el recordatorio (minutos antes del servicio)
+MINUTOS_ANTES_RECORDATORIO = 60     # cuándo enviar el recordatorio (minutos antes del servicio)
 MINUTOS_VENTANA_RECORDATORIO = 10   # margen de búsqueda (para no perderse citas)
-HORAS_DESPUES_SEGUIMIENTO = 0       # cuándo enviar el seguimiento post-servicio
-MINUTOS_VENTANA_SEGUIMIENTO = 5    # margen de búsqueda del seguimiento
+HORAS_DESPUES_SEGUIMIENTO = 2       # cuándo enviar el seguimiento post-servicio
+MINUTOS_VENTANA_SEGUIMIENTO = 15    # margen de búsqueda del seguimiento
 
 
 def _leer_notificaciones() -> dict:
@@ -172,7 +172,7 @@ def enviar_recordatorios():
             if linea.startswith("Servicio:"):
                 servicio = linea.split("Servicio:")[-1].strip()
 
-        hora_local = evento["inicio"] - timedelta(hours=5)  # UTC-5 Bogotá
+        hora_local = evento["inicio"].astimezone(__import__("zoneinfo").ZoneInfo("America/Bogota"))
         hora_texto = hora_local.strftime("%I:%M %p").lstrip("0")
 
         mensaje = (
