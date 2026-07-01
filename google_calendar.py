@@ -53,7 +53,7 @@ def _construir_resumen_y_descripcion(datos: dict):
 
     precio = services_data.SERVICIOS.get("moto", {}).get(servicio)
     if precio is not None:
-        precio_texto = f"${precio:,}".replace(",", ".") + " COP"
+        precio_texto = (f"${precio:,}".replace(",", ".") + " COP" if precio is not None else "Según cotización")
     else:
         precio_texto = "Según cotización"
 

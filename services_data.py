@@ -116,7 +116,7 @@ def formatear_precios(tipo_vehiculo: str = "moto") -> str:
         if precio is None:
             lineas.append(f"• {nombre}: Según cotización (contactar asesor)")
         else:
-            precio_formateado = f"{precio:,}".replace(",", ".")
+            precio_formateado = (f"{precio:,}".replace(",", ".") if precio is not None else "Según cotización")
             lineas.append(f"• {nombre}: ${precio_formateado} COP")
     return "\n".join(lineas)
 

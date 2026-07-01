@@ -61,7 +61,7 @@ def _construir_system_prompt(numero: str = "") -> str:
     # Construir el catálogo detallado con descripción, precio y tiempo por servicio
     catalogo = []
     for nombre, precio in services_data.SERVICIOS["moto"].items():
-        precio_fmt = f"${precio:,}".replace(",", ".") + " COP"
+        precio_fmt = (f"${precio:,}".replace(",", ".") + " COP" if precio is not None else "Según cotización")
         descripcion = services_data.DESCRIPCIONES_SERVICIOS.get(nombre, "")
         catalogo.append(f"• *{nombre}* — {precio_fmt}\n  {descripcion}")
     catalogo_texto = "\n\n".join(catalogo)
@@ -229,7 +229,7 @@ def _ejecutar_herramienta(nombre_herramienta: str, args: dict, numero: str) -> s
 
         elif nombre_herramienta == "mostrar_fotos_servicios":
             for nombre_serv, precio in services_data.SERVICIOS["moto"].items():
-                precio_fmt = f"{precio:,}".replace(",", ".")
+                precio_fmt = (f"{precio:,}".replace(",", ".") if precio is not None else "Según cotización")
                 url_imagen = services_data.url_imagen_servicio(nombre_serv)
                 if url_imagen:
                     send_image_message(numero, url_imagen, caption=f"{nombre_serv}\n${precio_fmt} COP")
@@ -266,7 +266,7 @@ def _ejecutar_herramienta(nombre_herramienta: str, args: dict, numero: str) -> s
 
                 precio = services_data.SERVICIOS.get("moto", {}).get(args["servicio"])
                 if precio is not None:
-                    precio_texto = f"${precio:,}".replace(",", ".") + " COP"
+                    precio_texto = (f"${precio:,}".replace(",", ".") + " COP" if precio is not None else "Según cotización")
                 else:
                     precio_texto = "Según cotización"
 
