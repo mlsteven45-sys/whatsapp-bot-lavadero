@@ -22,6 +22,7 @@ from dotenv import load_dotenv
 import claude_assistant
 import bot_control
 import services_data
+import scheduler as task_scheduler
 from whatsapp_api import send_text_message
 
 load_dotenv()
@@ -29,6 +30,9 @@ load_dotenv()
 app = Flask(__name__)
 
 VERIFY_TOKEN = os.environ.get("VERIFY_TOKEN", "")
+
+# Inicia las tareas en segundo plano (recordatorios y seguimiento)
+task_scheduler.iniciar_scheduler()
 
 
 @app.route("/webhook", methods=["GET"])

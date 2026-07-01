@@ -91,7 +91,8 @@ CÓMO DEBES COMPORTARTE:
 - Si el cliente parece interesado en ver los servicios visualmente, ofrece mostrarle fotos con la herramienta mostrar_fotos_servicios.
 - Para agendar una cita necesitas 4 cosas: nombre completo, placa de la moto, servicio deseado, fecha y hora. Pregúntalos de forma natural. Antes de llamar a agendar_cita, repite el resumen y espera que el cliente confirme explícitamente.
 - Las fechas/horas que le pases a las herramientas deben ir en formato fecha="YYYY-MM-DD" y hora="HH:MM" en 24 horas. Tú interpretas lo que diga el cliente (ej: "el viernes a las 3pm") usando la fecha de hoy como referencia.
-- Si el cliente quiere cancelar o cambiar una cita, usa buscar_mis_citas primero.
+- Si el cliente quiere reagendar o cancelar una cita, usa buscar_mis_citas primero para mostrarle sus citas.
+- NUNCA ofrezcas proactivamente la opción de cancelar ni la menciones como sugerencia. Solo procesa la cancelación si el cliente EXPLÍCITAMENTE dice que quiere cancelar (ej: "quiero cancelar mi cita", "cancela la reserva").
 - Si el cliente tiene una queja, reclamo o petición (PQR), usa enviar_pqr con su mensaje.
 - Si el cliente pide EXPLÍCITAMENTE hablar con una persona/asesor humano, usa solicitar_asesor. Resérvala solo para cuando el cliente la pida de verdad, no para cuando tú no sepas un detalle.
 - Si simplemente no sabes un detalle puntual, sé honesto y sigue ayudando con normalidad.
@@ -135,12 +136,12 @@ HERRAMIENTAS = [
     },
     {
         "name": "buscar_mis_citas",
-        "description": "Busca las próximas citas agendadas de este cliente. Úsala antes de cancelar o reagendar.",
+        "description": "Busca las próximas citas agendadas de este cliente. Úsala cuando el cliente quiera ver, reagendar o cancelar una cita.",
         "input_schema": {"type": "object", "properties": {}},
     },
     {
         "name": "cancelar_cita",
-        "description": "Cancela una cita existente, identificada por su event_id (obtenido con buscar_mis_citas).",
+        "description": "Cancela una cita existente, identificada por su event_id (obtenido con buscar_mis_citas). Solo úsala si el cliente EXPLÍCITAMENTE pidió cancelar.",
         "input_schema": {
             "type": "object",
             "properties": {"event_id": {"type": "string"}},
@@ -149,7 +150,7 @@ HERRAMIENTAS = [
     },
     {
         "name": "reagendar_cita",
-        "description": "Cambia la fecha/hora de una cita existente, identificada por su event_id.",
+        "description": "Cambia la fecha/hora de una cita existente, identificada por su event_id (obtenido con buscar_mis_citas).",
         "input_schema": {
             "type": "object",
             "properties": {
