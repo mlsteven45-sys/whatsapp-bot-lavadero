@@ -18,6 +18,7 @@ import services_data
 import booking
 import google_calendar
 import bot_control
+import cliente_db
 from whatsapp_api import send_text_message, send_image_message
 
 MODELO = "claude-haiku-4-5"
@@ -56,7 +57,7 @@ def _fecha_actual_bogota() -> str:
     return f"{ahora.strftime('%Y-%m-%d')} ({dias[ahora.weekday()]})"
 
 
-def _construir_system_prompt() -> str:
+def _construir_system_prompt(numero: str = "") -> str:
     # Construir el catálogo detallado con descripción, precio y tiempo por servicio
     catalogo = []
     for nombre, precio in services_data.SERVICIOS["moto"].items():
@@ -64,6 +65,20 @@ def _construir_system_prompt() -> str:
         descripcion = services_data.DESCRIPCIONES_SERVICIOS.get(nombre, "")
         catalogo.append(f"• *{nombre}* — {precio_fmt}\n  {descripcion}")
     catalogo_texto = "\n\n".join(catalogo)
+
+    # Personalización: si ya conocemos al cliente, dáselo a Claude
+    nombre_cliente = cliente_db.obtener_nombre(numero) if numero else None
+    if nombre_cliente:
+        contexto_cliente = (
+            f"\nCLIENTE ACTUAL: Ya conoces a este cliente, su nombre es *{nombre_cliente}*. "
+            f"Salúdalo por su nombre de forma natural al inicio de la conversación."
+        )
+    else:
+        contexto_cliente = (
+            "\nCLIENTE ACTUAL: No tenemos el nombre de este cliente aún. "
+            "No lo pidas de entrada — espera a que la conversación llegue a un punto natural "
+            "(como cuando quiera agendar una cita)."
+        )
 
     return f"""Eres el asistente virtual de {services_data.NOMBRE_NEGOCIO}, un negocio de lavado y detallado de motos en Medellín, Colombia. Hablas por WhatsApp directamente con los clientes.
 
@@ -91,14 +106,14 @@ CÓMO DEBES COMPORTARTE:
 - Si el cliente parece interesado en ver los servicios visualmente, ofrece mostrarle fotos con la herramienta mostrar_fotos_servicios.
 - Para agendar una cita necesitas 4 cosas: nombre completo, placa de la moto, servicio deseado, fecha y hora. Pregúntalos de forma natural. Antes de llamar a agendar_cita, repite el resumen y espera que el cliente confirme explícitamente.
 - Las fechas/horas que le pases a las herramientas deben ir en formato fecha="YYYY-MM-DD" y hora="HH:MM" en 24 horas. Tú interpretas lo que diga el cliente (ej: "el viernes a las 3pm") usando la fecha de hoy como referencia.
-- Si el cliente quiere reagendar o cancelar una cita, usa buscar_mis_citas primero para mostrarle sus citas.
+- Si el cliente responde confirmando su asistencia a una cita (ej: "sí confirmo", "ahí estaré", "confirmo"), respóndele con entusiasmo y usa notificar_confirmacion para avisarle al dueño que ese cliente confirmó.
 - NUNCA ofrezcas proactivamente la opción de cancelar ni la menciones como sugerencia. Solo procesa la cancelación si el cliente EXPLÍCITAMENTE dice que quiere cancelar (ej: "quiero cancelar mi cita", "cancela la reserva").
 - Si el cliente tiene una queja, reclamo o petición (PQR), usa enviar_pqr con su mensaje.
 - Si el cliente pide EXPLÍCITAMENTE hablar con una persona/asesor humano, usa solicitar_asesor. Resérvala solo para cuando el cliente la pida de verdad, no para cuando tú no sepas un detalle.
 - Si simplemente no sabes un detalle puntual, sé honesto y sigue ayudando con normalidad.
 - REGLA IMPORTANTE: nunca le digas al cliente que algo ya se hizo sin haber llamado realmente a la herramienta correspondiente primero.
 - Cuando envíes fotos u otro contenido al cliente, NO agregues frases de confirmación innecesarias como "Ya están ahí", "Listo, ya las envié" o similares antes de hacer una pregunta de seguimiento. Ve directo a la pregunta o comentario siguiente.
-- Nunca inventes información que no tengas. Si no sabes algo, dilo con honestidad."""
+- Nunca inventes información que no tengas. Si no sabes algo, dilo con honestidad.{contexto_cliente}"""
 
 
 HERRAMIENTAS = [
@@ -132,6 +147,17 @@ HERRAMIENTAS = [
                 "hora": {"type": "string", "description": "Hora en formato 24h HH:MM"},
             },
             "required": ["nombre", "placa", "servicio", "fecha", "hora"],
+        },
+    },
+    {
+        "name": "notificar_confirmacion",
+        "description": "Notifica al dueño que un cliente confirmó su asistencia a la cita. Úsala cuando el cliente responda afirmativamente al recordatorio.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "nombre_cliente": {"type": "string", "description": "Nombre del cliente que confirmó"},
+            },
+            "required": ["nombre_cliente"],
         },
     },
     {
@@ -188,6 +214,14 @@ def _ejecutar_herramienta(nombre_herramienta: str, args: dict, numero: str) -> s
                 return f"Hay cupo disponible para esa hora ({disponibles} de {services_data.MAX_CITAS_POR_HORA} espacios libres). Puedes proceder a agendar."
             return f"No hay cupo disponible para esa hora (ya hay {cantidad} motos agendadas y el máximo es {services_data.MAX_CITAS_POR_HORA}). Sugiere al cliente otra hora."
 
+        elif nombre_herramienta == "notificar_confirmacion":
+            if services_data.NUMERO_DUENO:
+                send_text_message(
+                    services_data.NUMERO_DUENO,
+                    f"✅ *Confirmación de cita*\n{args.get('nombre_cliente', 'Un cliente')} confirmó su asistencia. Ya está listo para su servicio 🏍️"
+                )
+            return "Confirmación enviada al dueño."
+
         elif nombre_herramienta == "mostrar_fotos_servicios":
             for nombre_serv, precio in services_data.SERVICIOS["moto"].items():
                 precio_fmt = f"{precio:,}".replace(",", ".")
@@ -204,6 +238,39 @@ def _ejecutar_herramienta(nombre_herramienta: str, args: dict, numero: str) -> s
                 "tipo_vehiculo": "moto",
             }
             event_id = booking.guardar_cita_estructurada(numero, datos, args["fecha"], args["hora"])
+
+            # Notificar al dueño con todos los detalles de la cita
+            if services_data.NUMERO_DUENO and event_id:
+                from datetime import datetime
+                try:
+                    fecha_legible = datetime.strptime(args["fecha"], "%Y-%m-%d").strftime("%d/%m/%Y")
+                except Exception:
+                    fecha_legible = args["fecha"]
+                hora_dt = args["hora"]
+                try:
+                    hora_legible = datetime.strptime(args["hora"], "%H:%M").strftime("%I:%M %p").lstrip("0")
+                except Exception:
+                    hora_legible = args["hora"]
+
+                precio = services_data.SERVICIOS.get("moto", {}).get(args["servicio"])
+                precio_texto = f"${precio:,}".replace(",", ".") + " COP" if precio else "No especificado"
+
+                mensaje_dueno = (
+                    f"📅 *Nueva cita agendada*\n\n"
+                    f"👤 *Nombre:* {args['nombre']}\n"
+                    f"🏍️ *Placa:* {args['placa'].upper()}\n"
+                    f"🔧 *Servicio:* {args['servicio']}\n"
+                    f"💰 *Precio:* {precio_texto}\n"
+                    f"📆 *Fecha:* {fecha_legible}\n"
+                    f"🕒 *Hora:* {hora_legible}\n"
+                    f"📱 *WhatsApp cliente:* {numero}"
+                )
+                send_text_message(services_data.NUMERO_DUENO, mensaje_dueno)
+
+            # Guardar el nombre del cliente para futuras conversaciones
+            if args.get("nombre"):
+                cliente_db.guardar_nombre(numero, args["nombre"])
+
             if event_id:
                 return f"Cita agendada correctamente para el {args['fecha']} a las {args['hora']}."
             return "No se pudo agendar automáticamente (error técnico). Dile al cliente con honestidad y ofrécele que un asesor lo va a contactar para confirmar manualmente."
