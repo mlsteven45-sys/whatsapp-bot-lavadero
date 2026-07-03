@@ -127,7 +127,7 @@ CÓMO DEBES COMPORTARTE:
 - Si el cliente responde confirmando su asistencia a una cita (ej: "sí confirmo", "ahí estaré", "confirmo"), respóndele con entusiasmo y usa notificar_confirmacion para avisarle al dueño que ese cliente confirmó.
 - NUNCA ofrezcas proactivamente la opción de cancelar ni la menciones como sugerencia. Solo procesa la cancelación si el cliente EXPLÍCITAMENTE dice que quiere cancelar (ej: "quiero cancelar mi cita", "cancela la reserva").
 - Si el cliente tiene una queja, reclamo o petición (PQR), usa enviar_pqr con su mensaje.
-- Si el cliente pide EXPLÍCITAMENTE hablar con una persona/asesor humano, usa solicitar_asesor.
+- Si el cliente pide EXPLÍCITAMENTE hablar con una persona/asesor humano, usa solicitar_asesor y luego responde EXACTAMENTE con este texto: "Listo, ya le avisamos al dueño que quieres hablar con nosotros directamente 👋 Alguien de nuestro equipo te escribirá en poco tiempo para ayudarte con lo que necesites. ¿Necesitas algo más?"
 - Si el cliente pregunta por el servicio PPF (Paint Protection Film), explícale los beneficios y dile que el precio es según cotización — usa solicitar_asesor para que un asesor lo contacte y le cotice. Resérvala solo para cuando el cliente la pida de verdad, no para cuando tú no sepas un detalle.
 - Si simplemente no sabes un detalle puntual, sé honesto y sigue ayudando con normalidad.
 - REGLA IMPORTANTE: nunca le digas al cliente que algo ya se hizo sin haber llamado realmente a la herramienta correspondiente primero.
@@ -417,7 +417,7 @@ def _procesar_mensaje(numero: str, texto: str):
     historial.append({"role": "user", "content": texto})
 
     cliente = _get_cliente()
-    system_prompt = _construir_system_prompt(numero)
+    system_prompt = _construir_system_prompt()
 
     try:
         respuesta = None
@@ -432,11 +432,13 @@ def _procesar_mensaje(numero: str, texto: str):
             historial.append({"role": "assistant", "content": respuesta.content})
 
             if respuesta.stop_reason != "tool_use":
+                print(f"🤖 Claude respondió sin herramienta (stop_reason={respuesta.stop_reason})", flush=True)
                 break
 
             resultados_herramientas = []
             for bloque in respuesta.content:
                 if bloque.type == "tool_use":
+                    print(f"🔧 Claude usa herramienta: {bloque.name} con args: {bloque.input}", flush=True)
                     resultado = _ejecutar_herramienta(bloque.name, bloque.input, numero)
                     resultados_herramientas.append({
                         "type": "tool_result",
