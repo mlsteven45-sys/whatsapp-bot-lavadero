@@ -15,7 +15,6 @@ real se hace en un hilo en segundo plano (threading), y esta ruta responde
 - POST /webhook  -> recibe cada mensaje nuevo y lo procesa con Claude (async)
 """
 import os
-import threading
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv
 
@@ -79,14 +78,8 @@ def recibir_mensaje():
 
         texto = mensaje["text"]["body"]
 
-        # Procesamos en segundo plano: así respondemos a Meta YA, sin
-        # esperar a que Claude (y sus herramientas) terminen de trabajar.
-        hilo = threading.Thread(
-            target=claude_assistant.handle_message,
-            args=(numero_remitente, texto),
-            daemon=True,
-        )
-        hilo.start()
+        # Procesamos directamente para mejor logging y diagnóstico
+        claude_assistant.handle_message(numero_remitente, texto)
 
     except (KeyError, IndexError) as e:
         print("⚠️ No se pudo procesar el mensaje entrante:", e, data)
