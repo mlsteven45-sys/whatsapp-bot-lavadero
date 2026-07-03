@@ -345,15 +345,8 @@ def _ejecutar_herramienta(nombre_herramienta: str, args: dict, numero: str) -> s
             return "PQR enviada al dueño del negocio."
 
         elif nombre_herramienta == "solicitar_asesor":
-            print(f"🔔 Ejecutando solicitar_asesor — NUMERO_DUENO={services_data.NUMERO_DUENO}", flush=True)
             if services_data.NUMERO_DUENO:
-                try:
-                    resp = send_text_message(services_data.NUMERO_DUENO, f"🙋 *Solicitud de asesor*\nEl cliente {numero} quiere hablar con una persona.")
-                    print(f"🔔 Resultado envío al asesor: {resp.status_code} {resp.text[:100]}", flush=True)
-                except Exception as ex:
-                    print(f"🔔 Error enviando al asesor: {ex}", flush=True)
-            else:
-                print("🔔 NUMERO_DUENO está vacío!", flush=True)
+                send_text_message(services_data.NUMERO_DUENO, f"🙋 *Solicitud de asesor*\nEl cliente {numero} quiere hablar con una persona.")
             return "Aviso enviado al dueño. El bot sigue funcionando normal con este cliente a menos que el dueño decida pausarlo manualmente."
 
         return "Herramienta no reconocida."
@@ -439,13 +432,11 @@ def _procesar_mensaje(numero: str, texto: str):
             historial.append({"role": "assistant", "content": respuesta.content})
 
             if respuesta.stop_reason != "tool_use":
-                print(f"🤖 Claude respondió sin herramienta (stop_reason={respuesta.stop_reason})", flush=True)
                 break
 
             resultados_herramientas = []
             for bloque in respuesta.content:
                 if bloque.type == "tool_use":
-                    print(f"🔧 Claude usa herramienta: {bloque.name} con args: {bloque.input}", flush=True)
                     resultado = _ejecutar_herramienta(bloque.name, bloque.input, numero)
                     resultados_herramientas.append({
                         "type": "tool_result",
