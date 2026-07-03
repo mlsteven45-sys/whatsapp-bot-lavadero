@@ -11,6 +11,7 @@ El historial de conversación se guarda en memoria por número de WhatsApp
 import os
 import threading
 from datetime import datetime, timedelta
+import time
 
 import anthropic
 
@@ -24,6 +25,16 @@ MODELO = "claude-haiku-4-5"
 MAX_MENSAJES_HISTORIAL = 20  # cuántos mensajes recientes recordamos por cliente
 
 historial_conversaciones = {}  # { "numero": [ {"role":..., "content":...}, ... ] }
+ultima_actividad = {}          # { "numero": timestamp_utc }
+retoma_enviada = {}            # { "numero": True } — para enviar el recordatorio solo 1 vez
+
+MINUTOS_INACTIVIDAD_RETOMA = 15  # minutos sin respuesta para enviar recordatorio
+
+# Estados que indican que el cliente está en medio de un agendamiento incompleto
+ESTADOS_AGENDAMIENTO = {
+    "AGENDAR_SERVICIO", "AGENDAR_NOMBRE", "AGENDAR_PLACA",
+    "AGENDAR_FECHA", "AGENDAR_HORA", "AGENDAR_CONFIRMAR"
+}
 
 _cliente_anthropic = None
 
@@ -320,7 +331,12 @@ def _ejecutar_herramienta(nombre_herramienta: str, args: dict, numero: str) -> s
             return "Cita cancelada correctamente." if exito else "No se pudo cancelar automáticamente, avísale al cliente que un asesor lo va a ayudar."
 
         elif nombre_herramienta == "reagendar_cita":
-            exito = google_calendar.actualizar_evento_estructurado(args["event_id"], args["fecha"], args["hora"])
+            event_id = args["event_id"]
+            fecha = args["fecha"]
+            hora = args["hora"]
+            print(f"🔄 Reagendando evento: event_id={event_id}, fecha={fecha}, hora={hora}")
+            exito = google_calendar.actualizar_evento_estructurado(event_id, fecha, hora)
+            print(f"🔄 Resultado reagendar: {exito}")
             return "Cita reagendada correctamente." if exito else "No se pudo reagendar automáticamente, avísale al cliente que un asesor lo va a ayudar."
 
         elif nombre_herramienta == "enviar_pqr":
@@ -340,6 +356,47 @@ def _ejecutar_herramienta(nombre_herramienta: str, args: dict, numero: str) -> s
         return "Ocurrió un error técnico ejecutando esta acción. Informa al cliente con honestidad y ofrece escalar con un asesor."
 
 
+def verificar_retomas():
+    """
+    Revisa si hay clientes inactivos en medio de un agendamiento
+    y les envía UN mensaje de retoma. Se llama desde el scheduler cada 5 minutos.
+    """
+    ahora = datetime.utcnow()
+    limite = timedelta(minutes=MINUTOS_INACTIVIDAD_RETOMA)
+
+    for numero, ts in list(ultima_actividad.items()):
+        if retoma_enviada.get(numero):
+            continue  # Ya le enviamos el recordatorio, no repetir
+
+        if ahora - ts < limite:
+            continue  # Aún no han pasado 15 minutos
+
+        # Verificar si está en medio de un agendamiento
+        sesion = historial_conversaciones.get(numero, [])
+        if not sesion:
+            continue
+
+        # Buscar el último mensaje del asistente para ver si quedó esperando datos
+        ultimo_assistant = next(
+            (m for m in reversed(sesion) if m.get("role") == "assistant"),
+            None
+        )
+        if not ultimo_assistant:
+            continue
+
+        # Enviar recordatorio de retoma
+        try:
+            send_text_message(
+                numero,
+                "¡Hola! 👋 Veo que quedamos a medias con tu agendamiento. "
+                "¿Seguimos? Aquí estamos para ayudarte 🏍️"
+            )
+            retoma_enviada[numero] = True
+            print(f"✅ Retoma enviada a {numero}")
+        except Exception as e:
+            print(f"⚠️ Error enviando retoma a {numero}: {e}")
+
+
 def handle_message(numero: str, texto: str):
     """Punto de entrada: procesa un mensaje de texto del cliente con Claude y responde por WhatsApp."""
     candado = _obtener_candado(numero)
@@ -348,6 +405,11 @@ def handle_message(numero: str, texto: str):
 
 
 def _procesar_mensaje(numero: str, texto: str):
+    # Actualizar timestamp de última actividad
+    ultima_actividad[numero] = datetime.utcnow()
+    # Si el cliente retomó, limpiar el flag de retoma enviada
+    retoma_enviada.pop(numero, None)
+
     if numero not in historial_conversaciones:
         historial_conversaciones[numero] = []
     historial = historial_conversaciones[numero]

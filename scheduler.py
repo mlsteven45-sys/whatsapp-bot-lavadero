@@ -21,6 +21,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 from whatsapp_api import send_text_message
 import google_calendar
+import claude_assistant
 
 ARCHIVO_NOTIFICACIONES = os.path.join(os.path.dirname(__file__), "notificaciones_enviadas.json")
 
@@ -133,7 +134,11 @@ def _obtener_eventos_finalizados(horas_hace: float, ventana_minutos: int) -> lis
             if not fin_str:
                 continue
             fin_dt = datetime.fromisoformat(fin_str)
-            if fin_min <= fin_dt.replace(tzinfo=None) <= fin_max:
+            # Convertir a UTC naive para comparar correctamente
+            if fin_dt.tzinfo is not None:
+                fin_dt_utc = fin_dt.utctimetuple()
+                fin_dt = datetime(*fin_dt_utc[:6])
+            if fin_min <= fin_dt <= fin_max:
                 eventos.append({
                     "id": item["id"],
                     "resumen": item.get("summary", "Cita"),
@@ -225,10 +230,28 @@ def enviar_seguimiento_postservicio():
 
 
 def iniciar_scheduler():
-    """Arranca el scheduler en segundo plano. Se llama una vez al iniciar Flask."""
+    """
+    Arranca el scheduler en segundo plano. Se llama una vez al iniciar Flask.
+    Usa un archivo de bloqueo para evitar que múltiples workers de Gunicorn
+    arranquen schedulers duplicados (lo que causaría mensajes duplicados).
+    """
+    import fcntl
+    import tempfile
+
+    lock_file = os.path.join(tempfile.gettempdir(), "motobot_scheduler.lock")
+
+    try:
+        lock = open(lock_file, "w")
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        # Solo el primer worker que llega acá obtiene el lock y arranca el scheduler
+    except (IOError, OSError):
+        print("⚠️ Scheduler ya corriendo en otro worker — este worker no lo iniciará.")
+        return None
+
     scheduler = BackgroundScheduler(timezone="America/Bogota")
     scheduler.add_job(enviar_recordatorios, "interval", minutes=5, id="recordatorios")
     scheduler.add_job(enviar_seguimiento_postservicio, "interval", minutes=5, id="seguimiento")
+    scheduler.add_job(claude_assistant.verificar_retomas, "interval", minutes=5, id="retomas")
     scheduler.start()
     print("✅ Scheduler iniciado: recordatorios y seguimiento post-servicio activos.")
     return scheduler
