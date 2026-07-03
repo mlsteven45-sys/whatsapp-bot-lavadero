@@ -345,8 +345,15 @@ def _ejecutar_herramienta(nombre_herramienta: str, args: dict, numero: str) -> s
             return "PQR enviada al dueño del negocio."
 
         elif nombre_herramienta == "solicitar_asesor":
+            print(f"🔔 Ejecutando solicitar_asesor — NUMERO_DUENO={services_data.NUMERO_DUENO}", flush=True)
             if services_data.NUMERO_DUENO:
-                send_text_message(services_data.NUMERO_DUENO, f"🙋 *Solicitud de asesor*\nEl cliente {numero} quiere hablar con una persona.")
+                try:
+                    resp = send_text_message(services_data.NUMERO_DUENO, f"🙋 *Solicitud de asesor*\nEl cliente {numero} quiere hablar con una persona.")
+                    print(f"🔔 Resultado envío al asesor: {resp.status_code} {resp.text[:100]}", flush=True)
+                except Exception as ex:
+                    print(f"🔔 Error enviando al asesor: {ex}", flush=True)
+            else:
+                print("🔔 NUMERO_DUENO está vacío!", flush=True)
             return "Aviso enviado al dueño. El bot sigue funcionando normal con este cliente a menos que el dueño decida pausarlo manualmente."
 
         return "Herramienta no reconocida."
