@@ -417,7 +417,7 @@ def _procesar_mensaje(numero: str, texto: str):
     historial.append({"role": "user", "content": texto})
 
     cliente = _get_cliente()
-    system_prompt = _construir_system_prompt()
+    system_prompt = _construir_system_prompt(numero)
 
     try:
         respuesta = None
