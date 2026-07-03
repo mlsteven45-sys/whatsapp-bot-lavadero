@@ -17,7 +17,6 @@ import anthropic
 import services_data
 import booking
 import google_calendar
-import bot_control
 import cliente_db
 from whatsapp_api import send_text_message, send_image_message
 
