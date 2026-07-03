@@ -77,9 +77,11 @@ def recibir_mensaje():
             return jsonify({"status": "ok"}), 200
 
         texto = mensaje["text"]["body"]
+        print(f"📨 Mensaje recibido de {numero_remitente}: {texto[:50]}", flush=True)
 
         # Procesamos directamente para mejor logging y diagnóstico
         claude_assistant.handle_message(numero_remitente, texto)
+        print(f"✅ Mensaje procesado para {numero_remitente}", flush=True)
 
     except (KeyError, IndexError) as e:
         print("⚠️ No se pudo procesar el mensaje entrante:", e, data)
