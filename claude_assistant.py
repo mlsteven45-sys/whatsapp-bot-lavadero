@@ -328,7 +328,15 @@ def _ejecutar_herramienta(nombre_herramienta: str, args: dict, numero: str) -> s
 
         elif nombre_herramienta == "cancelar_cita":
             exito = google_calendar.eliminar_evento(args["event_id"])
-            return "Cita cancelada correctamente." if exito else "No se pudo cancelar automáticamente, avísale al cliente que un asesor lo va a ayudar."
+            if exito:
+                if services_data.NUMERO_DUENO:
+                    send_text_message(services_data.NUMERO_DUENO,
+                        f"❌ *Cita cancelada*\n"
+                        f"📱 *Cliente:* {numero}\n"
+                        f"El cliente canceló su cita."
+                    )
+                return "Cita cancelada correctamente."
+            return "No se pudo cancelar automáticamente, avísale al cliente que un asesor lo va a ayudar."
 
         elif nombre_herramienta == "reagendar_cita":
             event_id = args["event_id"]
@@ -337,7 +345,23 @@ def _ejecutar_herramienta(nombre_herramienta: str, args: dict, numero: str) -> s
             print(f"🔄 Reagendando evento: event_id={event_id}, fecha={fecha}, hora={hora}")
             exito = google_calendar.actualizar_evento_estructurado(event_id, fecha, hora)
             print(f"🔄 Resultado reagendar: {exito}")
-            return "Cita reagendada correctamente." if exito else "No se pudo reagendar automáticamente, avísale al cliente que un asesor lo va a ayudar."
+            if exito:
+                if services_data.NUMERO_DUENO:
+                    from datetime import datetime
+                    try:
+                        fecha_legible = datetime.strptime(fecha, "%Y-%m-%d").strftime("%d/%m/%Y")
+                        hora_legible = datetime.strptime(hora, "%H:%M").strftime("%I:%M %p").lstrip("0")
+                    except Exception:
+                        fecha_legible = fecha
+                        hora_legible = hora
+                    send_text_message(services_data.NUMERO_DUENO,
+                        f"📅 *Cita reagendada*\n"
+                        f"📱 *Cliente:* {numero}\n"
+                        f"📆 *Nueva fecha:* {fecha_legible}\n"
+                        f"🕒 *Nueva hora:* {hora_legible}"
+                    )
+                return "Cita reagendada correctamente."
+            return "No se pudo reagendar automáticamente, avísale al cliente que un asesor lo va a ayudar."
 
         elif nombre_herramienta == "enviar_pqr":
             if services_data.NUMERO_DUENO:
