@@ -324,7 +324,7 @@ def _ejecutar_herramienta(nombre_herramienta: str, args: dict, numero: str) -> s
                 f"event_id={cita['id']} | {cita['resumen']} | {cita['inicio'].strftime('%Y-%m-%d %H:%M')}"
                 for cita in citas
             ]
-            return "Citas encontradas:\n" + "\n".join(lineas)
+            return "Citas encontradas (usa EXACTAMENTE el event_id que aparece aquí, no lo modifiques ni lo inventes):\n" + "\n".join(lineas)
 
         elif nombre_herramienta == "cancelar_cita":
             exito = google_calendar.eliminar_evento(args["event_id"])
