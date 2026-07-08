@@ -25,9 +25,9 @@ MODELO = "claude-haiku-4-5"
 MAX_MENSAJES_HISTORIAL = 20  # cuántos mensajes recientes recordamos por cliente
 
 historial_conversaciones = {}  # { "numero": [ {"role":..., "content":...}, ... ] }
+import time
 ultima_actividad = {}          # { "numero": timestamp_utc }
 retoma_enviada = {}            # { "numero": True } — para enviar el recordatorio solo 1 vez
-
 MINUTOS_INACTIVIDAD_RETOMA = 15  # minutos sin respuesta para enviar recordatorio
 
 # Estados que indican que el cliente está en medio de un agendamiento incompleto
@@ -130,6 +130,7 @@ CÓMO DEBES COMPORTARTE:
 - Si el cliente pide EXPLÍCITAMENTE hablar con una persona/asesor humano, usa solicitar_asesor y luego responde EXACTAMENTE con este texto: "Listo, ya le avisamos al dueño que quieres hablar con nosotros directamente 👋 Alguien de nuestro equipo te escribirá en poco tiempo para ayudarte con lo que necesites. ¿Necesitas algo más?"
 - Si el cliente pregunta por el servicio PPF (Paint Protection Film), explícale los beneficios y dile que el precio es según cotización — usa solicitar_asesor para que un asesor lo contacte y le cotice. Resérvala solo para cuando el cliente la pida de verdad, no para cuando tú no sepas un detalle.
 - Si simplemente no sabes un detalle puntual, sé honesto y sigue ayudando con normalidad.
+- Si el cliente responde al mensaje de seguimiento post-servicio (ej: "quedé muy contento", "estuvo mal", "muy bueno", "tuve un problema"), usa enviar_pqr para reenviarle esa opinión al asesor, indicando que es una respuesta de seguimiento post-servicio.
 - REGLA IMPORTANTE: nunca le digas al cliente que algo ya se hizo sin haber llamado realmente a la herramienta correspondiente primero.
 - Cuando envíes fotos u otro contenido al cliente, NO agregues frases de confirmación innecesarias como "Ya están ahí", "Listo, ya las envié" o similares antes de hacer una pregunta de seguimiento. Ve directo a la pregunta o comentario siguiente.
 - PROMOCIÓN ACTIVA: Si el cliente escribe exactamente o algo muy similar a "¡Hola! Quiero más información." (mensaje que llega de pauta de Instagram/Facebook), respóndele con el saludo normal y usa EXACTAMENTE este texto para la promoción: "¡Hola! 👋 Bienvenido a Motobon. Tenemos una promoción especial activa que está muy buena — incluye full lavada con shampoo de pH neutro, full desengrasado, restauración de partes negras plásticas con producto premium, desmanchada, polichado y brillada de toda la moto. Normalmente tiene un valor de $90.000, pero por tiempo limitado está en solo $60.000. ¿Deseas aprovechar la promoción y agendar? 🏍️" No menciones otros servicios en ese primer mensaje.
@@ -385,8 +386,8 @@ def verificar_retomas():
     Revisa si hay clientes inactivos en medio de un agendamiento
     y les envía UN mensaje de retoma. Se llama desde el scheduler cada 5 minutos.
     """
-    ahora = datetime.utcnow()
-    limite = timedelta(minutes=MINUTOS_INACTIVIDAD_RETOMA)
+    ahora = time.time()
+    limite = MINUTOS_INACTIVIDAD_RETOMA * 60
 
     for numero, ts in list(ultima_actividad.items()):
         if retoma_enviada.get(numero):
@@ -430,7 +431,7 @@ def handle_message(numero: str, texto: str):
 
 def _procesar_mensaje(numero: str, texto: str):
     # Actualizar timestamp de última actividad
-    ultima_actividad[numero] = datetime.utcnow()
+    ultima_actividad[numero] = time.time()
     # Si el cliente retomó, limpiar el flag de retoma enviada
     retoma_enviada.pop(numero, None)
 
