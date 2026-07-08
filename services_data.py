@@ -38,8 +38,7 @@ El *Lavado Súper Premium* va un paso más allá: en lugar del brillado a mano c
 METODOS_PAGO = "Contamos con pago en efectivo, transferencia bancaria y para servicios Súper Premium crédito con Wompi."
 
 # Número de WhatsApp PERSONAL del dueño, donde recibe avisos de "asesor" y PQR.
-NUMERO_DUENO = "573246451961"
-
+NUMERO_DUENO = "573015747945"
 # URL base donde está corriendo el bot en producción (Render).
 BASE_URL = "https://motobot-7iig.onrender.com"
 
