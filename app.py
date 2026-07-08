@@ -77,6 +77,7 @@ def recibir_mensaje():
             return jsonify({"status": "ok"}), 200
 
         texto = mensaje["text"]["body"]
+        claude_assistant.verificar_retomas()
         print(f"📨 [{numero_remitente}]: {texto[:200]}", flush=True)
 
         # Procesamos en segundo plano para responder a Meta de inmediato
