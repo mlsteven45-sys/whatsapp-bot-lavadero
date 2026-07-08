@@ -389,6 +389,10 @@ def verificar_retomas():
     ahora = time.time()
     limite = MINUTOS_INACTIVIDAD_RETOMA * 60
 
+    try:
+          ultima_actividad.update(json.load(open("actividad.json")) if os.path.exists("actividad.json") else {})
+    except:
+          pass
     for numero, ts in list(ultima_actividad.items()):
         if retoma_enviada.get(numero):
             continue  # Ya le enviamos el recordatorio, no repetir
@@ -431,7 +435,12 @@ def handle_message(numero: str, texto: str):
 
 def _procesar_mensaje(numero: str, texto: str):
     # Actualizar timestamp de última actividad
-    ultima_actividad[numero] = time.time()
+    try:
+    _act = json.load(open("actividad.json")) if os.path.exists("actividad.json") else {}
+    except:
+    _act = {}
+    _act[numero] = time.time()
+    json.dump(_act, open("actividad.json", "w"))
     # Si el cliente retomó, limpiar el flag de retoma enviada
     retoma_enviada.pop(numero, None)
 
