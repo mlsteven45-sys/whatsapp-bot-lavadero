@@ -436,9 +436,9 @@ def handle_message(numero: str, texto: str):
 def _procesar_mensaje(numero: str, texto: str):
     # Actualizar timestamp de última actividad
     try:
-    _act = json.load(open("actividad.json")) if os.path.exists("actividad.json") else {}
+        _act = json.load(open("actividad.json")) if os.path.exists("actividad.json") else {}
     except:
-    _act = {}
+        _act = {}
     _act[numero] = time.time()
     json.dump(_act, open("actividad.json", "w"))
     # Si el cliente retomó, limpiar el flag de retoma enviada
