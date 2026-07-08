@@ -389,6 +389,9 @@ def verificar_retomas():
     ahora = time.time()
     limite = MINUTOS_INACTIVIDAD_RETOMA * 60
 
+    def verificar_retomas():
+    print(f"🔍 verificar_retomas ejecutado. Clientes activos: {list(ultima_actividad.keys())}", flush=True)
+
     for numero, ts in list(ultima_actividad.items()):
         if retoma_enviada.get(numero):
             continue  # Ya le enviamos el recordatorio, no repetir
