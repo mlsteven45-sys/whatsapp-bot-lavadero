@@ -488,10 +488,9 @@ def _procesar_mensaje(numero: str, texto: str):
             bloque.text for bloque in respuesta.content if bloque.type == "text"
         ).strip()
 
-       if texto_respuesta:
+        if texto_respuesta:
             print(f"🤖 [{numero}]: {texto_respuesta[:100]}", flush=True)
             send_text_message(numero, texto_respuesta)
-
     except Exception as error:
         print("⚠️ Error al hablar con Claude:", error)
         send_text_message(numero, "Disculpa, tuve un problema técnico. ¿Puedes repetir tu mensaje? 🙏")
