@@ -19,7 +19,6 @@ PROMOCION_ACTIVA = {
         "Full lavada de toda la moto con shampoo de pH neutro, full desengrasado de toda la moto, "
         "restauración de todas las partes negras plásticas con producto premium, "
         "desmanchada, pulida y brillada de toda la moto."
-        "El nombre exacto del servicio para agendar la promoción es SIEMPRE: "Promo $60.000 - Polichado y Brillada" — usa ese nombre exacto, nunca inventes otro.
     ),
     "precio_normal": 90000,
     "precio_promo": 60000,
