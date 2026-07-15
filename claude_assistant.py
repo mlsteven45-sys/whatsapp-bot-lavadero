@@ -489,7 +489,7 @@ def _procesar_mensaje(numero: str, texto: str):
         ).strip()
 
         if texto_respuesta:
-            print(f"🤖 [{numero}]: {texto_respuesta[:300]}", flush=True)
+            print(f"🤖 [{numero}]: {texto_respuesta[:800]}", flush=True)
             send_text_message(numero, texto_respuesta)
     except Exception as error:
         print("⚠️ Error al hablar con Claude:", error)
