@@ -28,7 +28,7 @@ historial_conversaciones = {}  # { "numero": [ {"role":..., "content":...}, ... 
 import time
 ultima_actividad = {}          # { "numero": timestamp_utc }
 retoma_enviada = {}            # { "numero": True } — para enviar el recordatorio solo 1 vez
-MINUTOS_INACTIVIDAD_RETOMA = 15  # minutos sin respuesta para enviar recordatorio
+MINUTOS_INACTIVIDAD_RETOMA = 360  # minutos sin respuesta para enviar recordatorio
 
 # Estados que indican que el cliente está en medio de un agendamiento incompleto
 ESTADOS_AGENDAMIENTO = {
